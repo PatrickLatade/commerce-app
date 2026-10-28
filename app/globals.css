@@ -1,26 +1,177 @@
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  background: #111;
+  color: #eee;
+  font-family: Arial, sans-serif;
+}
+
+.market {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.ticker {
+  overflow: hidden;
+  white-space: nowrap;
+  margin-bottom: 40px;
+}
+
+.ticker-track{
+  display: inline-block;
+  white-space: nowrap;
+  animation: scroll 20s linear infinite;
+}
+
+.keyset-a, .keyset-b {
+  display: inline-block;
+}
+
+.sep{
+  opacity: 0.5;
+}
+
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+.market-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
+.market-header h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+.market-header p {
+  margin: 6px 0 0;
+  color: #888;
+}
+
+.up {
+  color: #16a34a;
+}
+
+.down {
+  color: #dc2626;
+}
+
+.balance {
+  text-align: right;
+}
+
+.balance span {
+  display: block;
+  font-size: 13px;
+  color: #888;
+}
+
+.balance strong {
+  font-size: 24px;
+}
+
+.commodity-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.commodity-card {
+  padding: 20px;
+  border: 1px solid #333;
+  border-radius: 10px;
+  background: #181818;
+}
+
+.commodity-card h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.price {
+  margin: 0;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+.change {
+  margin: 8px 0 20px;
+  color: #888;
+}
+
+.commodity-card button {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.buy-button {
+  background: #90ea8e;
+  color: #111;
+}
+
+.sell-button {
+  background: blue;
+  color: #fff;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.commodity-card button:hover {
+  background: #ccc;
+}
+
+@media (max-width: 500px) {
+  .market-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .balance {
+    text-align: left;
+  }
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #181818;
+  padding: 24px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 600px;
+  border: 1px solid #333;
+}
+
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 16px;
+  margin-top: 20px;
 }
