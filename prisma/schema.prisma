@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Round {
+  id Int @id @default(autoincrement())
+  status String
+  startTime DateTime? 
+  endTime DateTime?
+  players Player[]
+}
+
+model Commodity {
+  id String @id
+  commodityName String
+  basePrice Float 
+  currentPrice Float
+  companyID String?
+  inventory PlayerInventory[]
+}
+
+model Player {
+  id Int @id @default(autoincrement())
+  username String
+  round Round @relation(fields: [roundId], references: [id])
+  roundId Int
+  inventory PlayerInventory[]
+}
+
+model PlayerInventory{
+  id Int @id @default(autoincrement())
+  player Player @relation(fields: [playerId], references: [id])
+  playerId Int
+  commodity Commodity @relation(fields: [commodityId], references: [id])
+  commodityId String
+  quantity Int
+}
