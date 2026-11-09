@@ -4,21 +4,23 @@ import {useState, useEffect, useReducer,} from "react";
 import Link from "next/link";
 
 function ChangeIndicator({value}: {value: number}) {
+  const className = value > 0 ? "up" : value < 0 ? "down" : "neutral";
+  const arrow = value > 0 ? "▲" : value < 0 ? "▼" : "−"; 
   return(
-    <span className={value >= 0 ? "up" : "down"}>
-      {value >= 0 ? "▲" : "▼"} {Math.abs(value).toFixed(1)}%
+    <span className={className}>
+      {arrow} {Math.abs(value).toFixed(1)}%
     </span>
   );
 }
 
 function gameReducer(state:GameState, action:GameAction) {
   if (action.type === 'BUY') {
-    if (state.balance < action.commodity.price){
+    if (state.balance < action.commodity.currentPrice){
       return state;
     }
     return {
       ...state, 
-      balance: state.balance - action.commodity.price,
+      balance: state.balance - action.commodity.currentPrice,
       inventory: {
         ...state.inventory, [action.commodity.id]: state.inventory[action.commodity.id] + 1,
       }
@@ -31,7 +33,7 @@ function gameReducer(state:GameState, action:GameAction) {
     }
     return {
       ...state, 
-      balance: state.balance + action.commodity.price,
+      balance: state.balance + action.commodity.currentPrice,
       inventory: {
         ...state.inventory, [action.commodity.id]: state.inventory[action.commodity.id] - 1,
       }
@@ -69,7 +71,7 @@ function InventoryModal({
               const commodity = commodities.find((c) => c.id === commodityId);
               return (
                 <div key={commodityId}>
-                  {commodity?.name}: {quantity}
+                  {commodity?.commodityName}: {quantity}
                 </div>
               );
             })
@@ -87,8 +89,8 @@ interface GameState{
 
 interface Commodity {
   id: string;
-  name: string;
-  price: number;
+  commodityName: string;
+  currentPrice: number;
   change: number;
 }
 
@@ -104,50 +106,27 @@ export default function Home() {
   });
   const [message, setMessage] = useState("");
   const [isInventoryOpen, setIsInventoryOpen] =useState(false)
-  const [commodities, setCommodities] = useState([
-      {
-    id: "tea",
-    name: "Tea",
-    price: 42,
-    change: 2.4,
-  },
-  {
-    id: "spices",
-    name: "Spices",
-    price: 68,
-    change: -1.1,
-  },
-  {
-    id: "iron",
-    name: "Iron",
-    price: 51,
-    change: 0.8,
-  },
-  {
-    id: "wheat",
-    name: "Wheat",
-    price: 31,
-    change: 0.3,
-  },
-  {
-    id: "oil",
-    name: "Oil",
-    price: 75,
-    change: -2.1,
-  },
-  {
-    id: "gold",
-    name: "Gold",
-    price: 90,
-    change: 3.1,
-  },  
-])
-const networth = 
-  gameState.balance + 
-  Object.entries(gameState.inventory).reduce((total, [commodityId, quantity]) => {
+  const [commodities, setCommodities] = useState<Commodity[]>([])
+  const networth = 
+    gameState.balance + 
+    Object.entries(gameState.inventory).reduce((total, [commodityId, quantity]) => {
   const commodity = commodities.find((c) => c.id === commodityId );
-    return total + quantity * (commodity?.price ?? 0);
-  }, 0)  
+    return total + quantity * (commodity?.currentPrice ?? 0);
+  }, 0)
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsMounted(true);
+  }, []);
+  useEffect (() => {
+    const fetchCommodities = async () => {
+      const res = await fetch('/api/commodities');
+      const data = await res.json();
+      const mappedData = data.map((c: Commodity) => ({...c, change:0}))
+      setCommodities(mappedData);
+    }
+    fetchCommodities();
+  }, []);
     useEffect(() => {
     const timer = setInterval(() => {
             setCommodities(prevCommodities => {
@@ -156,9 +135,9 @@ const networth =
                 const randomDirection = Math.floor(Math.random() * 2);
                 const direction = randomDirection * 2 - 1;
                 const pointchange = amount * direction;
-                const percentchange = Number(((pointchange / commodity.price) * 100).toFixed(1));
+                const percentchange = Number(((pointchange / commodity.currentPrice) * 100).toFixed(1));
                 return {...commodity, 
-                  price: commodity.price + pointchange, 
+                  currentPrice: commodity.currentPrice + pointchange, 
                   change: percentchange,};
               });
             });
@@ -186,33 +165,36 @@ const networth =
         </div>
       </header>
       
+      {isMounted && (
       <div>
       <div className="ticker">
             <div className="ticker-track">
               <div className="keyset-a">
                 {commodities.map((c) => (
-                  <span key = {c.name}>
-                    {c.name} <ChangeIndicator value={c.change} /> <span className="sep">•</span>{" "}
+                  <span key = {c.commodityName}>
+                    {c.commodityName} <ChangeIndicator value={c.change} /> <span className="sep">•</span>{" "}
                   </span>
                 ))}
               </div>
               <div className="keyset-b">
                 {commodities.map((c) => (
-                  <span key = {c.name}>
-                    {c.name} <ChangeIndicator value={c.change} /> <span className="sep">•</span>{" "}
+                  <span key = {c.commodityName}>
+                    {c.commodityName} <ChangeIndicator value={c.change} /> <span className="sep">•</span>{" "}
                   </span>
                 ))}
               </div>
             </div>
           </div>
         </div>
+      )}
 
+      {isMounted && (
       <section className="commodity-grid">
         {commodities.map((commodity) => (
-          <article className="commodity-card" key={commodity.name}>
-            <h2>{commodity.name}</h2>
+          <article className="commodity-card" key={commodity.commodityName}>
+            <h2>{commodity.commodityName}</h2>
 
-            <p className="price">${commodity.price}</p>
+            <p className="price">${commodity.currentPrice}</p>
 
             <p className="change">
               <ChangeIndicator value = {commodity.change} />
@@ -220,11 +202,11 @@ const networth =
             <div className="button-group">
             <button className="buy-button"
               onClick={() => {
-                if (gameState.balance >= commodity.price) {
+                if (gameState.balance >= commodity.currentPrice) {
                   dispatch({ type: "BUY", commodity: commodity });
-                  setMessage(`You bought ${commodity.name} for $${commodity.price}`);
+                  setMessage(`You bought ${commodity.commodityName} for $${commodity.currentPrice}`);
                 } else {
-                  setMessage(`Insufficient money to buy ${commodity.name}`);
+                  setMessage(`Insufficient money to buy ${commodity.commodityName}`);
                 }
               }}>
               Buy
@@ -234,9 +216,9 @@ const networth =
               onClick={() => {
                 if (gameState.inventory[commodity.id] > 0) {
                   dispatch({ type: "SELL", commodity: commodity });
-                  setMessage(`You sold ${commodity.name} for $${commodity.price}`);
+                  setMessage(`You sold ${commodity.commodityName} for $${commodity.currentPrice}`);
                 } else {
-                  setMessage(`You don't have any ${commodity.name} to sell!`);
+                  setMessage(`You don't have any ${commodity.commodityName} to sell!`);
                 }
               }}>
               Sell
@@ -245,6 +227,7 @@ const networth =
           </article>
         ))}
       </section>
+      )}
       <div className="inventory">
         <h2>Inventory</h2>
         <ul>
@@ -252,7 +235,7 @@ const networth =
             const commodity = commodities.find((c) => c.id === commodityId);
             return (
               <li key={commodityId}>
-                {commodity?.name}: {quantity}
+                {commodity?.commodityName}: {quantity}
               </li>
             );
           })}
